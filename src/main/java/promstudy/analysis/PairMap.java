@@ -1,11 +1,11 @@
-package promstudy.managers;
+package promstudy.analysis;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.RealMatrix;
 import promstudy.clustering.KMeansMatrices;
 import promstudy.common.FastaParser;
+import promstudy.common.Predictor;
 import promstudy.visualization.PairMapComp;
-import promstudy.visualization.SalMapComp;
 import promstudy.visualization.Trend;
 
 import javax.imageio.ImageIO;
@@ -13,7 +13,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 /**
@@ -35,7 +34,7 @@ public class PairMap {
     static int w = 30 * anLen;
     static int h = 30 * anLen;
     private static boolean ignoreCore = false;
-    private static int numSeq = 18000; //7900
+    private static int numSeq = 5000; //7900
 
     public static void main(String[] args) {
         File toPred = null;
@@ -78,6 +77,7 @@ public class PairMap {
     public static void analyse() {
         ArrayList<float[]> arrays1 = new ArrayList<>();
         ArrayList<float[]> arrays2 = new ArrayList<>();
+        // Make all the required predictions or load them if they are already done
         if (new File("arrays1_pm.bin").exists()) {
             try {
                 FileInputStream fileIn = new FileInputStream("arrays1_pm.bin");
@@ -96,8 +96,8 @@ public class PairMap {
         } else {
             System.out.println("Progress: ");
             for (int i = 0; i < numSeq; i++) {
-                //float[][] seq = Arrays.copyOfRange(sequences[i], 4800, 5400);
                 float[][] seq = sequences[i];
+                // For calculation of score change when nucleotides are removed one by one
                 int total = anLen + 1;
                 float[][][] toPredict = new float[total][sLen][4];
                 for (int j = 0; j < toPredict.length - 1; j++) {
@@ -113,7 +113,7 @@ public class PairMap {
                 }
                 toPredict[toPredict.length - 1] = seq;
                 arrays1.add(p.predict(toPredict));
-
+                // Calculations when removing both nucleotides together
                 total = (anLen * anLen - anLen) / 2;
                 toPredict = new float[total][sLen][4];
                 int ind = 0;
@@ -146,6 +146,7 @@ public class PairMap {
                     System.out.print((i + 1) + " ");
                 }
             }
+            // Save the predictions to disk
             FileOutputStream fos = null;
             try {
                 fos = new FileOutputStream("arrays1_pm.bin");
@@ -163,13 +164,14 @@ public class PairMap {
         double[][] total = new double[anLen][anLen];
         ArrayList<RealMatrix> results = new ArrayList<>();
         for (int ari = 0; ari < arrays1.size(); ari++) {
-            float[][] seq = sequences[ari];
             float[] ar1 = arrays1.get(ari);
             float[] ar2 = arrays2.get(ari);
+            // score of the original sequence
             double maxScore = ar1[ar1.length - 1];
-            if (maxScore < 0.5) {
-                continue;
-            }
+            // don't use sequence which is not actually predicted as a promoter
+//            if (maxScore < 0.5) {
+//                continue;
+//            }
 
             int ind = 0;
             double[][] data = new double[anLen][anLen];
@@ -181,15 +183,17 @@ public class PairMap {
                     //    v = 0.0;
                     //}
                     //else {
-                    v = Math.abs(maxScore - ar2[ind]) - Math.abs((maxScore - ar1[r]) + (maxScore - ar1[j]));
+                    v = Math.abs(maxScore - ar2[ind]) - Math.abs(maxScore - ar1[r] + maxScore - ar1[j]);
+                    // v = Math.log(v + 1);
+
                     //}
-                    if (v > 0) {
-                        v = 1 / (Math.exp(-1000 * Math.abs(v)) + 1)  - 0.5;
-                    } else if (v < 0) {
-                        v = -1 * (1 / (Math.exp(-1000 * Math.abs(v)) + 1) - 0.5);
-                    } else {
-                        v = 0.0;
-                    }
+//                    if (v > 0) {
+//                        v = 1 / (Math.exp(Math.abs(v)) + 1)  - 0.5;
+//                    } else if (v < 0) {
+//                        v = -1 * (1 / (Math.exp(Math.abs(v)) + 1) - 0.5);
+//                    } else {
+//                        v = 0.0;
+//                    }
                     //}
                     //Double v = Math.abs(maxScore - ar2[ind]) - (Math.abs(maxScore - ar1[r]) + Math.abs(maxScore - ar1[j]));
                     ind++;

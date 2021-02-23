@@ -1,4 +1,4 @@
-package promstudy.managers;
+package promstudy.analysis;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.ArrayRealVector;
@@ -9,6 +9,7 @@ import promstudy.clustering.KMeansMatrices;
 import promstudy.clustering.Sequence;
 import promstudy.common.FastaParser;
 import promstudy.dataVisualisation.LogoComponent;
+import promstudy.common.Predictor;
 import promstudy.visualization.Trend;
 
 import javax.imageio.ImageIO;
@@ -16,9 +17,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.lang.reflect.Array;
 import java.util.*;
-import java.util.stream.IntStream;
 
 /**
  * Created by umarovr on 3/22/18.
@@ -37,7 +36,7 @@ public class MotifMap {
     static int w = 500;
     static int h = 100;
     private static boolean ignoreCore = false;
-    private static int numSeq = 18000; //7970
+    private static int numSeq = 6000; //7970
     private static int motifLen = 7;
 
     public static void main(String[] args) {
@@ -96,7 +95,7 @@ public class MotifMap {
         Random rand = new Random();
         ArrayList<float[]> arrays1 = new ArrayList<>();
         ArrayList<float[]> arrays2 = new ArrayList<>();
-
+        // load results from disk or compute them if they don't exist
         if (new File("arrays1.bin").exists()) {
             try {
                 FileInputStream fileIn = new FileInputStream("arrays1.bin");
@@ -115,12 +114,12 @@ public class MotifMap {
         } else {
             System.out.println("Progress: ");
             for (int i = 0; i < numSeq; i++) {
-                //float[][] seq = Arrays.copyOfRange(sequences[i], 4800, 5400);
                 float[][] seq = sequences[i];
                 int total = seq.length - motifLen + 1;
                 float[][][] toPredict = new float[total][sLen][4];
                 for (int j = 0; j < toPredict.length - 1; j++) {
                     float[][] seq2 = cloneArray(seq);
+                    // replace with random sequences and calculate change of the score
                     for (int n = 0; n < motifLen; n++) {
                         if (j + n == tss || j + n == tss - 1) {
                             continue;
@@ -129,7 +128,7 @@ public class MotifMap {
                         for (int d = 0; d < seq2[n].length; d++) {
                             seq2[j + n][d] = 0;
                         }
-                        seq2[j + n][nd] = 1;
+                        //seq2[j + n][nd] = 1;
                     }
                     toPredict[j] = seq2;
                 }
@@ -174,10 +173,6 @@ public class MotifMap {
 
         ArrayList<Sequence> trackNoCoreTotal = new ArrayList<>();
         ArrayList<Sequence> trackCore = new ArrayList<>();
-        OldMotif tata = new OldMotif(15);
-        OldMotif ccat = new OldMotif(12);
-        OldMotif inr = new OldMotif(8);
-        OldMotif tct = new OldMotif(8);
 
         ArrayList<String> cons = new ArrayList<>();
         ArrayList<String> urls = new ArrayList<>();
@@ -235,9 +230,10 @@ public class MotifMap {
             float[] ar2 = arrays2.get(ari);
             double maxScore = ar1[ar1.length - 1];
             ArrayList<Sequence> trackNoCore = new ArrayList<>();
-            if (maxScore < 0.5) {
-                continue;
-            }
+            // dont work with sequences which are not predicted as regulatory
+//            if (maxScore < 0.5) {
+//                continue;
+//            }
             selected++;
             RealMatrix m = new Array2DRowRealMatrix(101, 1);
             RealMatrix ma = new Array2DRowRealMatrix(1001, 1);
@@ -245,13 +241,13 @@ public class MotifMap {
             RealMatrix md = new Array2DRowRealMatrix(450, 1);
             for (int c = 0; c < ar1.length - 1; c++) {
                 if (maxScore - ar1[c] <= 0) {
-                    //continue;
+                    continue;
                 }
-                double v = ar1[c] / maxScore;
+                double effectValue = ar1[c] / maxScore;
                 if (c > 450 && c < 551) {
-                    trackCore.add(new Sequence(flatten(seq, c, motifLen), v, c));
+                    trackCore.add(new Sequence(flatten(seq, c, motifLen), effectValue, c));
                 } else {
-                    trackNoCore.add(new Sequence(flatten(seq, c, motifLen), v, c));
+                    trackNoCore.add(new Sequence(flatten(seq, c, motifLen), effectValue, c));
                 }
                 total[c] += (maxScore - ar1[c]);
                 if (c < 450) {
@@ -261,42 +257,13 @@ public class MotifMap {
                 } else {
                     md.setEntry(c - 551, 0, maxScore - ar1[c]);
                 }
-                ma.setEntry(c, 0, maxScore - ar1[c]);
+                ma.setEntry(c, 0, Math.abs(maxScore - ar1[c]));
             }
             allM.add(ma);
             coreM.add(m);
             upM.add(mu);
             downM.add(md);
-            double[] temp = tatascore(seq, tss);
-            if (temp[0] >= -8.16) {
-                int p = (int) (tss - temp[1]);
-                tata.add(flatten(seq, p, 15));
-                tata.count++;
-                tata.pos.add(p);
-                tata.effect += ar1[p] / maxScore;
-            }
 
-            temp = ccaatscore(seq, tss);
-            if (temp[0] >= -4.54) {
-                int p = (int) (tss - temp[1]);
-                ccat.add(flatten(seq, p, 12));
-                ccat.count++;
-                ccat.pos.add(p);
-                ccat.effect += ar1[p] / maxScore;
-            }
-
-            double score = inrscore(seq, tss);
-            if (score >= -3.75) {
-                inr.add(flatten(seq, 498, 8));
-                inr.count++;
-                inr.effect += ar2[0] / maxScore;
-            }
-            score = tctscore(seq, tss);
-            if (score >= 12.84) {
-                tct.add(flatten(seq, 498, 8));
-                tct.count++;
-                tct.effect += ar2[0] / maxScore;
-            }
             ArrayList<Sequence> chosen = new ArrayList<>();
             Collections.sort(trackNoCore, (o1, o2) -> Double.compare(o1.v, o2.v));
             //Collections.reverse(trackNoCore);
@@ -307,7 +274,7 @@ public class MotifMap {
                     for (int j : inds) {
                         if (j < ar1.length) {
                             double change = ar1[j] / maxScore;
-                            if (change < 0.9 && (j < 400 || j > 600)) {
+                            if (change < 0.9 && (j < 450 || j > 550)) {
                                 //System.out.println(urls.get(i) + " " + j);
                                 cc++;
                                 if (workingcons.containsKey(cons.get(i))) {
@@ -347,73 +314,24 @@ public class MotifMap {
             Map.Entry pair = (Map.Entry) it.next();
             SimpleMotif sm = (SimpleMotif) pair.getValue();
             int tm = sm.count;
-            if (tm > 50) {
+            if (tm > 20) {
                 System.out.println(pair.getKey() + " = " + sm.count + "  " + sm.getPosition(500) + " "
                         + "  " + sm.position / sm.count + "   " + (sm.effect / sm.count) + "   " + urls.get(cons.indexOf(pair.getKey())));
             }
         }
         System.out.println();
-        try {
-            ArrayList<RealMatrix> ms = KMeansMatrices.freqMatrix(downM);
-            BufferedWriter br = new BufferedWriter(new FileWriter("md.csv"));
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < 450; i++) {
-                for (int j = 0; j < ms.size(); j++) {
-                    sb.append(ms.get(j).getEntry(i, 0));
-                    sb.append(",");
-                }
-                sb.append("\n");
-            }
-            br.write(sb.toString());
-            br.close();
-        } catch (
-                IOException e) {
-            e.printStackTrace();
-        }
-        try {
-            ArrayList<RealMatrix> ms = KMeansMatrices.freqMatrix(coreM);
-            BufferedWriter br = new BufferedWriter(new FileWriter("mc.csv"));
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < 101; i++) {
-                for (int j = 0; j < ms.size(); j++) {
-                    sb.append(ms.get(j).getEntry(i, 0));
-                    sb.append(",");
-                }
-                sb.append("\n");
-            }
-            br.write(sb.toString());
-            br.close();
-        } catch (
-                IOException e) {
-            e.printStackTrace();
-        }
-        try {
-            ArrayList<RealMatrix> ms = KMeansMatrices.freqMatrix(upM);
-            BufferedWriter br = new BufferedWriter(new FileWriter("mu.csv"));
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < 450; i++) {
-                for (int j = 0; j < ms.size(); j++) {
-                    sb.append(ms.get(j).getEntry(i, 0));
-                    sb.append(",");
-                }
-                sb.append("\n");
-            }
-            br.write(sb.toString());
-            br.close();
-        } catch (
-                IOException e) {
-            e.printStackTrace();
-        }
 
         try {
-            ArrayList<RealMatrix> ms = KMeansMatrices.freqMatrix(allM);
-            BufferedWriter br = new BufferedWriter(new FileWriter("ma.csv"));
+            RealMatrix avgImp = new Array2DRowRealMatrix(allM.get(0).getRowDimension(), allM.get(0).getColumnDimension());
+            for (int i = 0; i < allM.size(); i++) {
+                RealMatrix rm = allM.get(i);
+                avgImp = avgImp.add(rm);
+            }
+            avgImp = avgImp.scalarMultiply(1.0 / allM.size());
+            BufferedWriter br = new BufferedWriter(new FileWriter("importance.csv"));
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < 1001; i++) {
-                for (int j = 0; j < ms.size(); j++) {
-                    sb.append(ms.get(j).getEntry(i, 0));
-                    sb.append(",");
-                }
+                sb.append(avgImp.getEntry(i, 0));
                 sb.append("\n");
             }
             br.write(sb.toString());
@@ -466,20 +384,6 @@ public class MotifMap {
             System.out.println(m.name + ", " + (double) m.count / numSeq + ", " + m.getPosition(tss) + ", " + m.effect / m.ec);
             saveLogo(m.fm, m.name + "_new");
         }
-
-        System.out.println("Name, Frequency, Position, Effect");
-        System.out.println("TATA, " + (double) tata.count / numSeq + ", " + tata.getPosition(tss) + ", " + tata.effect / tata.count);
-        System.out.println("CCAT, " + (double) ccat.count / numSeq + ", " + ccat.getPosition(tss) + ", " + ccat.effect / ccat.count);
-        System.out.println("Inr, " + (double) inr.count / numSeq + ", " + "-2" + ", " + inr.effect / inr.count);
-        System.out.println("TCT, " + (double) tct.count / numSeq + ", " + "-2" + ", " + tct.effect / tct.count);
-
-        saveLogo(tata.fm, "tata");
-
-        saveLogo(ccat.fm, "ccat");
-
-        saveLogo(inr.fm, "inr");
-
-        saveLogo(tct.fm, "tct");
 
         ArrayList<RealMatrix> motifs = KMeans.freqMatrix(trackCore, tss);
         for (
@@ -654,97 +558,6 @@ public class MotifMap {
         return target;
     }
 
-    public static double[] tatascore(float[][] a, int tss) {
-        double[][] tata = new double[][]{{-1.02, -1.68, 0, -0.28}, {-3.05, 0, -2.74, -2.06}, {0, -2.28, -4.28, -5.22}, {-4.61, 0, -4.61, -3.49}, {
-                0, -2.34, -3.77, -5.17}, {0, -0.52, -4.73, -4.63}, {0, -3.65, -2.65, -4.12}, {0, -0.37, -1.5, -3.74}, {
-                -0.01, -1.4, 0, -1.13}, {-0.94, -0.97, 0, -0.05}, {-0.54, -1.4, -0.09, 0}, {-0.48, -0.82, 0, -0.05}, {
-                -0.48, -0.66, 0, -0.11}, {-0.74, -0.54, 0, -0.28}, {-0.62, -0.61, 0, -0.4}};
-        double maxScore = -1000;
-        int maxI = -1000;
-        for (int p = 0; p < 14; p++) {
-            double[][] seq = new double[15][4];
-            for (int i = 0; i < tata.length; i++) {
-                for (int j = 0; j < 4; j++) {
-                    seq[i][j] = a[tss - 39 + p + i][j];
-                }
-            }
-            double score = 0;
-            for (int i = 0; i < tata.length; i++) {
-                for (int j = 0; j < 4; j++) {
-                    score = score + tata[i][j] * seq[i][j];
-                }
-            }
-            if (score > maxScore) {
-                maxScore = score;
-                maxI = 39 - p;
-            }
-        }
-        return new double[]{maxScore, maxI};
-    }
-
-    public static double[] ccaatscore(float[][] a, int tss) {
-        double[][] ccat = {{-0.02, 0, -1.46, -0.01}, {-0.49, -0.01, -0.24, 0}, {-1.19, 0, -1.26, -0.57}, {0, -3.16, -0.4, -3.46}, {
-                -0.61, -1.44, 0, -2.45}, {-4.39, -3.99, -4.03, 0}, {-4.4, -4, -4.4, 0}, {0, -4.37, -4.37, -4.37}, {
-                0, -1.33, -1.69, -2.45}, {-2.12, 0, -2.26, -4.27}, {-1.32, -2.84, -0.47, 0}, {0, -3.57, -0.81, -2.64}};
-        double maxScore = -1000;
-        int maxI = -1000;
-
-        for (int p = 0; p < 142; p++) {
-            double[][] seq = new double[12][4];
-            for (int i = 0; i < ccat.length; i++) {
-                for (int j = 0; j < 4; j++) {
-                    seq[i][j] = a[tss - 200 + p + i][j];
-                }
-            }
-
-            double score = 0;
-            for (int i = 0; i < ccat.length; i++) {
-                for (int j = 0; j < 4; j++) {
-                    score = score + ccat[i][j] * seq[i][j];
-                }
-            }
-            if (score > maxScore) {
-                maxScore = score;
-                maxI = 200 - p;
-            }
-        }
-        return new double[]{maxScore, maxI};
-    }
-
-    public static double inrscore(float[][] b, int tss) {
-        double[][] inr = new double[][]{{-1.14, 0, -0.75, -1.16}, {-5.26, -5.26, -5.26, 0}, {0, -2.74, -5.21, -5.21}, {-1.51, -0.29, 0, -0.41}, {-0.65, 0, -4.56, -0.45}, {-0.55, -0.36, -0.86, 0}, {-0.91, 0, -0.38, -0.29}, {-0.82, 0, -0.65, -0.18}};
-        double[][] a = new double[8][4];
-        for (int i = 0; i < a.length; i++) {
-            for (int j = 0; j < 4; j++) {
-                a[i][j] = b[tss - 2 + i][j];
-            }
-        }
-        double score = 0;
-        for (int i = 0; i < inr.length; i++) {
-            for (int j = 0; j < 4; j++) {
-                score = score + inr[i][j] * a[i][j];
-            }
-        }
-        return score;
-    }
-
-    public static double tctscore(float[][] b, int tss) {
-        double[][] tct = new double[][]{{0.08, 0.35, 0.30, 0.27}, {0.08, 0.32, 0.17, 0.43}, {0.00, 0.00, 0.00, 11.00}, {0.07, 0.62, 0.08, 0.24}, {0.09, 0.32, 0.16, 0.43}, {0.11, 0.43, 0.15, 0.30}, {0.09, 0.33, 0.22, 0.36}, {0.10, 0.28, 0.24, 0.38}};
-        double[][] a = new double[8][4];
-        for (int i = 0; i < a.length; i++) {
-            for (int j = 0; j < 4; j++) {
-                a[i][j] = b[tss - 2 + i][j];
-            }
-        }
-        double score = 0;
-        for (int i = 0; i < tct.length; i++) {
-            for (int j = 0; j < 4; j++) {
-                score = score + tct[i][j] * a[i][j];
-            }
-        }
-        return score;
-    }
-
 
 }
 
@@ -783,9 +596,9 @@ class Motif {
             String t = br.readLine();
 
             pwm[0] = toArray(a, ",");
-            pwm[1] = toArray(t, ",");
+            pwm[1] = toArray(c, ",");
             pwm[2] = toArray(g, ",");
-            pwm[3] = toArray(c, ",");
+            pwm[3] = toArray(t, ",");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -883,53 +696,6 @@ class Motif {
         fm = fmNew.scalarMultiply(1.0 / count);
         norm();
         fmNew = new Array2DRowRealMatrix(fm.getRowDimension(), fm.getColumnDimension());
-    }
-}
-
-class OldMotif {
-    public ArrayList<Integer> pos;
-    public double effect = 0;
-    public int count = 0;
-    public RealMatrix fm;
-
-    public OldMotif(int seqLen) {
-        this.fm = new Array2DRowRealMatrix(4, seqLen);
-        this.pos = new ArrayList<>();
-    }
-
-    public void add(int[] sequence) {
-        for (int j = 0; j < fm.getColumnDimension(); j++) {
-            if (sequence[j] > 0) {
-                fm.addToEntry(sequence[j] - 1, j, 1);
-            }
-        }
-    }
-
-    public String getPosition(int tss) {
-        int min = Integer.MAX_VALUE;
-        int max = -Integer.MAX_VALUE;
-        for (int p : pos) {
-            if (p > max) {
-                max = p;
-            }
-            if (p < min) {
-                min = p;
-            }
-        }
-        String l = "";
-        if (min < tss) {
-            l = "[" + (min - tss);
-        } else {
-            l = "[+" + (min - tss + 1);
-        }
-
-        String r = "";
-        if (max < tss) {
-            r = (max - tss) + "]";
-        } else {
-            r = "+" + (max - tss + 1) + "]";
-        }
-        return l + " : " + r;
     }
 }
 

@@ -1,4 +1,4 @@
-package promstudy.managers;
+package promstudy.common;
 
 import org.tensorflow.SavedModelBundle;
 import org.tensorflow.Session;

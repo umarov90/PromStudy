@@ -11,10 +11,10 @@ import java.util.Random;
 
 public class KMeansMatrices {
 
-    public static int k = 18;
-    public static int itNum = 4;
+    public static int k = 20;
+    public static int itNum = 10;
     public static int scale = 1;
-    public static int maxSize = 5000000;
+    public static int maxSize = 500;
     private static int seqLen = 15;
 
     public static ArrayList<RealMatrix> freqMatrix(ArrayList<RealMatrix> input) {
@@ -124,7 +124,7 @@ public class KMeansMatrices {
         int index = -1;
         for (int i = 0; i < clusters.size(); i++) {
             double score = score(clusters.get(i).mean, m);
-            if (score < bestScore && clusters.get(i).matrices.size() < 5000 ) { //&& clusters.get(i).matrices.size() < 600
+            if (score < bestScore && clusters.get(i).matrices.size() < maxSize ) { //&& clusters.get(i).matrices.size() < 600
                 bestScore = score;
                 index = i;
             }

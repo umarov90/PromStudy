@@ -32,10 +32,10 @@ public class PairMapComp extends DataComponent {
 
         for (int i = 0; i < array.length; i++) {
             for (int j = 0; j < array[i].length; j++) {
-                //double d = Math.log(10*Math.abs(array[i][j]) + 1);
-                double d = array[i][j];
+                double d = Math.log(100 * Math.abs(array[i][j]) + 1);
+                //double d = array[i][j];
                 if (array[i][j] < 0) {
-                    //d = -1 * d;
+                    d = -1 * d;
                 }
                 if (d == 0 || Double.isNaN(d)) {
                     continue;
@@ -55,12 +55,6 @@ public class PairMapComp extends DataComponent {
         norm = vals.get(vals.size() / 2);
         mid = 0;
         //System.out.println(max + " " + mid + " " + min);
-
-        customColors = new HashMap<>();
-        customColors.put("A", Color.decode("#228B22"));
-        customColors.put("T", Color.decode("#e62200"));
-        customColors.put("G", Color.ORANGE);
-        customColors.put("C", Color.decode("#00008B"));
     }
 
 

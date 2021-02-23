@@ -1,11 +1,10 @@
 package promstudy.main;
 
 import promstudy.common.FastaParser;
-import promstudy.managers.Predictor;
+import promstudy.common.Predictor;
 
 import java.io.File;
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.Arrays;
 
 public class PromStudy {

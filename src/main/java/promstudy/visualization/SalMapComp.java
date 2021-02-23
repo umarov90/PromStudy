@@ -18,9 +18,11 @@ public class SalMapComp extends DataComponent {
     private int offset;
     public static boolean thick = false;
     private static Map<String, Color> customColors;
+    private int tss;
 
-    public SalMapComp(double[] array) {
+    public SalMapComp(double[] array, int tss) {
         super("trend");
+        this.tss = tss;
         this.array = array;
 
         max = -Double.MAX_VALUE;
@@ -50,7 +52,7 @@ public class SalMapComp extends DataComponent {
         height = getHeight();
         width = getWidth();
         g2d.setRenderingHints(renderHints);
-        int fs = 20;
+        int fs = 28;
         Font origFont = new Font("Arial", Font.PLAIN, fs);
         g2d.setFont(origFont);
 
@@ -68,8 +70,16 @@ public class SalMapComp extends DataComponent {
         height = 0;
 
         height+=6*step+100;
-        for (int i = 0; i < array.length; i++) {
 
+        Font bigFont = new Font("Arial", Font.PLAIN, 30);
+        g2d.setFont(bigFont);
+        g2d.setColor(Color.BLACK);
+        String[] ls = new String[]{"A", "C", "G", "T"};
+        for (int j = 0; j < 4; j++) {
+            g2d.drawString(ls[j], + fs/2, height - (4*step - step*(j%4)) -fs/2 );
+        }
+        g2d.setFont(origFont);
+        for (int i = 0; i < array.length; i++) {
 /*            if((i/4)%50==0 && i%4==0){
                 height+=6*step;
                 String[] ls = new String[]{"A", "T", "G", "C"};
@@ -83,17 +93,14 @@ public class SalMapComp extends DataComponent {
                 maxL =array[i];
                 maxI = i;
             }
-            if((((i+1) / 4)) == 149){
-                int ffff = 2+2;
-            }
             if(i%4==3){
                 String l = "A";
                 if(maxI%4==1){
-                    l = "T";
+                    l = "C";
                 }else  if(maxI%4==2){
                     l = "G";
                 }else  if(maxI%4==3){
-                    l = "C";
+                    l = "T";
                 }
                 g2d.setColor(Color.BLACK);
 
@@ -104,7 +111,7 @@ public class SalMapComp extends DataComponent {
                 //g2d.drawString(l, step + (ii/4) * step+ fs/2 + 3, height - 5*step -fs/2);
 
                 //if((((i+1) / 4)) >= 150 && (((i+1) / 4)) <= 251) {
-                    g2d.drawString("" + ((i / 4) + 1), step + (i / 4) * step + 19 - 5 * ("" + ((i / 4) + 1)).length(), height - fs / 2);
+                    g2d.drawString(getPosition(((i / 4) + 1)), step + (i / 4) * step + 1 - 5 * ("" + ((i / 4) + 1)).length(), height - fs / 2);
                     g2d.setFont(new Font("Verdana", Font.PLAIN, 1024));
                     CharacterImageGenerator characterGenerator = new CharacterImageGenerator(g2d.getFontMetrics(), customColors.get(l));
 
@@ -158,5 +165,18 @@ public class SalMapComp extends DataComponent {
         bGr.drawImage(img, 0, 0, null);
         bGr.dispose();
         return bimage;
+    }
+
+    public String getPosition(int p) {
+        if (p % 2 == 0){
+            return "";
+        }
+        if (p < tss) {
+            return "" + (p - tss);
+        } else if (p > tss) {
+            return "+" + (p - tss + 1);
+        } else {
+            return "+1";
+        }
     }
 }

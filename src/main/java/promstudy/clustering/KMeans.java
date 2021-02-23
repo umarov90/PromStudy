@@ -10,8 +10,8 @@ import java.util.Random;
 
 public class KMeans {
 
-    public static int k = 3;
-    public static int itNum = 100;
+    public static int k = 20;
+    public static int itNum = 20;
     public static int scale = 1;
     public static int maxSize = 5000000;
     private static int seqLen = 10;
