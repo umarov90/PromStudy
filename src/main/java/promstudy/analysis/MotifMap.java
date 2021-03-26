@@ -29,7 +29,7 @@ public class MotifMap {
     private static int sLen = 1001;
     private static int sd = 10;
     private static int minDist = 1000;
-    private static String output = "mot_out_";
+    private static String output = "./";
     private static ArrayList<String> names;
     private static double dt = 0.5;
     private static int count = 1;
@@ -96,7 +96,7 @@ public class MotifMap {
         ArrayList<float[]> arrays1 = new ArrayList<>();
         ArrayList<float[]> arrays2 = new ArrayList<>();
         // load results from disk or compute them if they don't exist
-        if (new File("arrays1.bin").exists()) {
+        if (new File("arrays11.bin").exists()) {
             try {
                 FileInputStream fileIn = new FileInputStream("arrays1.bin");
                 ObjectInputStream in = new ObjectInputStream(fileIn);
@@ -128,7 +128,7 @@ public class MotifMap {
                         for (int d = 0; d < seq2[n].length; d++) {
                             seq2[j + n][d] = 0;
                         }
-                        //seq2[j + n][nd] = 1;
+                        seq2[j + n][nd] = 1;
                     }
                     toPredict[j] = seq2;
                 }
@@ -240,9 +240,9 @@ public class MotifMap {
             RealMatrix mu = new Array2DRowRealMatrix(450, 1);
             RealMatrix md = new Array2DRowRealMatrix(450, 1);
             for (int c = 0; c < ar1.length - 1; c++) {
-                if (maxScore - ar1[c] <= 0) {
-                    continue;
-                }
+//                if (maxScore - ar1[c] <= 0) {
+//                    continue;
+//                }
                 double effectValue = ar1[c] / maxScore;
                 if (c > 450 && c < 551) {
                     trackCore.add(new Sequence(flatten(seq, c, motifLen), effectValue, c));
@@ -393,9 +393,13 @@ public class MotifMap {
 
         motifs = KMeans.freqMatrix(trackNoCoreTotal, tss);
         double bdt = 0;
-        for (
-                int i = 0; i < motifs.size(); i++) {
-            saveLogo(motifs.get(i), "no_core" + i);
+        for (int i = 0; i < motifs.size(); i++) {
+//            if(KMeans.loc.get(i).startsWith("[+")){
+//                saveLogo(motifs.get(i), "down/no_core" + i);
+//            }else{
+//                saveLogo(motifs.get(i), "up/no_core" + i);
+//            }
+            saveLogo(motifs.get(i), "enh/no_core" + i);
             String conNew = getCon(motifs.get(i));
             int index = 0;
             int bd = 100;

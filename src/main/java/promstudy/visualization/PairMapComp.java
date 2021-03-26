@@ -32,7 +32,7 @@ public class PairMapComp extends DataComponent {
 
         for (int i = 0; i < array.length; i++) {
             for (int j = 0; j < array[i].length; j++) {
-                double d = Math.log(100 * Math.abs(array[i][j]) + 1);
+                double d = Math.log(Math.abs(array[i][j]) + 1);
                 //double d = array[i][j];
                 if (array[i][j] < 0) {
                     d = -1 * d;

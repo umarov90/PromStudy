@@ -28,7 +28,7 @@ public class LogoComponent extends JComponent {
 	protected Color backgroundColor = Color.WHITE;
 	private RealMatrix F;
 	private RealVector R;
-	public static int minSize = 1;
+	public static int minSize = 4;
 	private ArrayList<String> letters;
 	public  int letterWidth = 32;
 	private static int maxLetterHeight = 500;

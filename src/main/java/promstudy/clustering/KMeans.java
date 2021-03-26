@@ -15,8 +15,10 @@ public class KMeans {
     public static int scale = 1;
     public static int maxSize = 5000000;
     private static int seqLen = 10;
+    public static ArrayList<String> loc;
 
     public static ArrayList<RealMatrix> freqMatrix(ArrayList<Sequence> input, int tss) {
+        loc = new ArrayList<>();
         seqLen = input.get(0).seq.length;
         Collections.sort(input);
         //Collections.reverse(input);
@@ -107,6 +109,7 @@ public class KMeans {
             score /= clusters.get(i).sequences.size();
             System.out.println("Cluster (" + (i) + ") size " + clusters.get(i).sequences.size() + " effect " + score
                     + " location " + getPosition(tss, clusters.get(i).sequences));
+            loc.add(getPosition(tss, clusters.get(i).sequences));
         }
         // bestCluster = Integer.parseInt(JOptionPane.showInputDialog("123"));
         ArrayList<RealMatrix> fms = new ArrayList<>();

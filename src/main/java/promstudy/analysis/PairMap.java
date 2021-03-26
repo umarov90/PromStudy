@@ -34,7 +34,7 @@ public class PairMap {
     static int w = 30 * anLen;
     static int h = 30 * anLen;
     private static boolean ignoreCore = false;
-    private static int numSeq = 5000; //7900
+    private static int numSeq = 9700; //7900
 
     public static void main(String[] args) {
         File toPred = null;

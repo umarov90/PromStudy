@@ -14,7 +14,7 @@ public class KMeansMatrices {
     public static int k = 20;
     public static int itNum = 10;
     public static int scale = 1;
-    public static int maxSize = 500;
+    public static int maxSize = 1000;
     private static int seqLen = 15;
 
     public static ArrayList<RealMatrix> freqMatrix(ArrayList<RealMatrix> input) {

@@ -54,9 +54,9 @@ public class FastaParser {
                 }
                 name = line;
                 seq = new StringBuilder();
-                if(fa.size() > 30000){
-                    break;
-                }
+//                if(fa.size() > 30000){
+//                    break;
+//                }
             }else {
                 seq.append(line);
             }
